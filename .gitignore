@@ -1,0 +1,10 @@
+# 忽略本機產物與臨時檔
+dist/
+*.zip
+*.7z
+_tmp/
+*.log
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
