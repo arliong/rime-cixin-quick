@@ -1,0 +1,37 @@
+MIT License
+
+Copyright (c) 2026 慈心速成 (Cixin Quick) 專案貢獻者
+
+本授權僅適用於本專案「原創」的檔案，包括：
+  - lua/cixin_quick_predict.lua        （盲接聯想處理器）
+  - lua/cixin_quick_predict_tr.lua     （候選欄聯想翻譯器）
+  - lua/cixin_quick_index.lua          （預建索引；由本專案腳本自動生成）
+  - tools/ 目錄下全部腳本              （索引生成、詞組表生成、打包工具）
+  - docs/ 目錄下全部文件
+  - cixin_quick.schema.yaml            （基於上游修改的功能性設定）
+
+上述「由腳本自動生成」的檔案（索引、詞組表）同時是 rime/rime-essay
+（LGPL-3.0）詞頻數據的衍生產物，其再分發同時受 LGPL-3.0 約束，
+詳見 NOTICE.md。
+
+不適用於本授權的內容：
+  - 單字速成碼表（源自 philipposkhos/rime-ms-quick，該上游未聲明
+    任何授權），其歸屬與使用限制見 NOTICE.md。
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

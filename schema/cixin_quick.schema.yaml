@@ -1,0 +1,111 @@
+# Rime schema settings
+# encoding: utf-8
+#
+# 傳統速成（微軟排位）＋ 詞組聯想（聯想字 / shift+數字）增強版
+# 基於 https://github.com/philipposkhos/rime-ms-quick
+# 原方案「沒有聯想字、不會自組字詞」。本修改：
+#   1) 詞組碼表併入主碼表（cixin_quick.dict.yaml，84,999 條），可直接打詞（ojii→什麼）
+#   2) librime-lua 聯想組件（Weasel 0.17.4 自帶，無須額外 dll）：
+#        - lua_processor@cixin_quick_predict  ：上屏後 Shift+1..9 接龍（XP 式）
+#        - lua_translator@cixin_quick_predict_tr：把聯想續接字顯示在候選欄
+#   3) enable_completion：打碼時即提示更長詞組（輔助）
+
+schema:
+  schema_id: cixin_quick
+  name: 慈心速成
+  version: "1.0.0"
+  author:
+    - Kho
+    - （詞組聯想增強：WorkBuddy）
+  description: |
+    碼表按照 windows 10 傳統速成錄入(含增加香港增補字符集字元)。
+    已增強：上屏後自動詞組聯想（shift+數字），並可連打詞組。
+
+switches:
+  - name: ascii_mode
+    # reset: 0 (1是英文)
+    states: [ 中文, 西文 ]
+  - name: full_shape
+    states: [ 半角, 全角 ]
+  - name: simplification
+    states: [ 漢字, 汉字 ]
+  - name: _hide_candidate #供 Android Trime 識別，會隱藏手機上的候選欄
+    reset: 1
+
+engine:
+  processors:
+    - ascii_composer
+    - lua_processor@*cixin_quick_predict   # 上屏後 shift+數字 詞組聯想（XP 式接龍）；* = 自載入（require 直接載入，不依賴 rime.lua 全域變數）
+    - recognizer
+    - key_binder
+    - speller
+    - selector
+    - navigator
+    - express_editor
+  segmentors:
+    - ascii_segmentor
+    - matcher
+    - abc_segmentor
+    - punct_segmentor
+    - fallback_segmentor
+  translators:
+    - punct_translator
+    - table_translator
+    - reverse_lookup_translator            # ` + 拼音 反查速成
+  filters:
+    - simplifier
+
+speller:
+  delimiter: " ;"
+  alphabet: abcdefghijklmnopqrstuvwxyz
+
+translator:
+  dictionary: cixin_quick
+  enable_completion: true  # 打碼時即提示更長的詞組，便於連打
+  enable_user_dict: false
+  preedit_format:
+    - "xlit|abcdefghijklmnopqrstuvwxyz|日月金木水火土竹戈十大中一弓人心手口尸廿山女田難卜符|"
+  comment_format:
+    - "xlit|abcdefghijklmnopqrstuvwxyz|日月金木水火土竹戈十大中一弓人心手口尸廿山女田難卜符|"
+
+# ===== 詞組聯想 說明 =====
+# Weasel 0.17.4（librime 1.13.1）已移除內建 predictor 組件，
+# 故舊版「上屏後 shift+數字接龍」無法用純 YAML 實現，改以 librime-lua 腳本複刻。
+# 本機 rime.dll 已含 lua（無須額外下載 dll）。
+# 行為：oj→1(什) 上屏後，候選欄出現「麼〔什麼〕」等聯想，按 Shift+1 接上 → 什麼。
+#   - 處理器：cixin_quick_predict.lua（commit_notifier 抓上屏字 → 查表 → Shift+數字接龍）
+#   - 翻譯器：cixin_quick_predict_tr.lua（把聯想續接字顯示為候選）
+# 若候選欄未顯示聯想（部分版本對空輸入不觸發翻譯），Shift+數字 接龍仍會生效（盲接）。
+cixin_quick_predict:
+  dict_path: cixin_quick_phrases.dict.yaml   # 聯想詞庫（已含於 cixin_quick.dict.yaml，此處供 Lua 讀取）
+
+reverse_lookup:
+  dictionary: luna_pinyin
+  prefix: "`"
+  tips: 〔拼音〕
+  preedit_format:
+    - xform/([nljqxy])v/$1ü/
+  comment_format:
+    - "xlit|abcdefghijklmnopqrstuvwxyz|日月金木水火土竹戈十大中一弓人心手口尸廿山女田難卜符|"
+
+key_binder:
+  import_preset: default
+  bindings: 
+    - { when: has_menu, accept: space, send: Page_Down }
+    # 註：原 Shift_L 切英文已移除，讓出 Shift 鍵給「上屏後 shift+數字 聯想接龍」。
+    # 如需切換中/英文，請用 F4 選單或 Ctrl+` 切方案。
+
+menu:
+  page_size: 9
+
+simplifier:
+  tips: all # 簡化字模式下提示對應的傳統漢字
+
+recognizer:
+  import_preset: default
+  patterns:
+    reverse_lookup: "`[a-z]*$"
+
+style:
+  font_point: 12 #字號
+  horizontal: false #橫／直排

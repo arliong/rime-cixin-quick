@@ -1,0 +1,7 @@
+# encoding: utf-8
+# 慈心速成安裝輔助：把方案加入可選列表
+# ⚠️ 若已有自訂 default.custom.yaml，不要覆蓋，請自行把這兩行併入你的 patch/schema_list
+patch:
+  schema_list:
+    - schema: cixin_quick
+    - schema: luna_pinyin   # v1.2.0 起拼音反查需要（要編譯出 prism）
