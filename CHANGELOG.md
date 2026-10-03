@@ -2,6 +2,16 @@
 
 所有對外發佈的版本均記錄於此。格式參考 [Keep a Changelog](https://keepachangelog.com/)。
 
+## [v1.1.0] — 2026-09-27
+
+### 新增
+- **候選欄可見聯想**：上屏一字後，候選欄即時橫向列出聯想詞，
+  支持數字鍵選擇與鼠標點選；`Esc` 取消，繼續打字自動隱藏。
+- 實現機制：librime 的 `Commit()` 是「先 commit_notifier、後 Clear()」，
+  故在 `commit_notifier` 只置標記，於 `update_notifier`（Clear 之後觸發）
+  再 `push_input("~")` 合成標記分段，交由 `lua_translator` 生成聯想候選。
+- 推標記前先檢查該字有無聯想詞，避免空候選欄殘留。
+
 ## [v1.0.0] — 2026-09-27
 
 ### 新增
