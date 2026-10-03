@@ -1,6 +1,13 @@
 -- 傳統速成 上屏後「詞組聯想」（XP 式：Shift+數字 接龍 + 候選欄可見聯想）
--- 機制：上屏一字後，commit_notifier 錨定該字 → 查預建索引 → Shift+1..9 續接上屏。
---       本版**候選欄不顯示**聯想詞（盲接），v1.1.0 起才補上可見聯想。
+-- 機制：
+--   A. 上屏一字後，commit_notifier 只置 pending_mark（librime 1.13 的 Commit()
+--      是先回調後 Clear()，回調裡設 input 會被清）；由 update_notifier 回調
+--      （Clear() 之後）用 push_input("~") 合成「標記分段」，讓 lua_translator
+--      把聯想詞顯示在候選欄（可見預覽；鼠標點選亦可選詞）。
+--      注意：librime-lua 的 Context 沒有 set_input 方法（那是 input 屬性 setter）。
+--   B. Shift+1..9 盲接仍是主機制（鍵碼兼容移位符號與直數字兩形態）。
+--   C. 標記態按鍵語義：Esc=取消聯想；字母/普通數字/空格/標點=清標記放行恢復打字；
+--      純 Shift 放行不動標記（避免 Shift+數字 期間候選欄閃爍）。
 -- 防護：
 --   * keyup（按鍵釋放）事件必須放行——否則同一鍵接龍兩次（實測「什麼麼」）；
 --     另加 150ms 同鍵去重兜底。
@@ -11,6 +18,8 @@
 -- 模組回傳 table（含 M.func）；librime-lua loader 對 table 讀 .func 欄位。
 --   func(key, env) 回傳值：0=kReject, 1=kAccept, 2(其他)=kNoop。
 local M = {}
+
+local MARK = "~"  -- 聯想標記分段（不會被 speller alphabet 吸收，punct_segmentor 接手）
 
 -- 預建索引；require 失敗則降為空表（功能降級但不崩潰）
 local ok_idx, idx = pcall(require, "cixin_quick_index")
@@ -27,6 +36,14 @@ end)
 local last_committed = nil
 -- 上次接龍去重記錄 { clock, n, committed }：150ms 內同鍵同字不重複上屏
 local last_hit = nil
+-- 聯想標記態：notifier set_input 後為 true，清除後復位
+local marking = false
+-- 待推標記：commit_notifier 裡置位（librime 1.13 的 Commit() 是
+-- 「先觸發 commit_notifier、後 Clear()」，回調裡設 input 會被清掉），
+-- 由 update_notifier 回調（Clear() 之後觸發）消費：push_input("~") 合成標記分段。
+-- update_notifier 槽序：Engine 先（對空 input 的 Compose 跑完）、本模組後，
+-- 故嵌套 Compose("~") 不會被外層覆蓋。標誌冪等，重複連線（切方案）也安全。
+local pending_mark = false
 
 -- UTF-8 拆字（兼容各 Lua 版本，不依賴 utf8 庫）
 local function uchars(s)
@@ -55,7 +72,22 @@ local function tail_of(word, committed)
   return table.concat(wc, "", #cc + 1)
 end
 
--- 註冊 commit_notifier：上屏後錨定本次提交文字（v1.0 不做候選欄標記分段）
+-- 判斷「以最近上屏字開頭」是否有聯想詞（無則不推標記，避免空候選欄）
+local function has_predict(committed)
+  if not committed or #committed == 0 then return false end
+  local chars = uchars(committed)
+  local list = idx[chars[#chars]]
+  if not list or #list == 0 then return false end
+  for _, word in ipairs(list) do
+    local tail = tail_of(word, committed)
+    if tail and #tail > 0 then return true end
+  end
+  return false
+end
+
+-- 註冊 notifiers：
+--   commit_notifier → 錨定本次提交文字 + 置 pending_mark（不設 input，會被 Clear 清掉）
+--   update_notifier → Clear() 之後觸發，消費 pending_mark：push_input("~") 合成標記分段
 function M.init(env)
   local ok, ctx = pcall(function() return env.engine.context end)
   if not ok or not ctx then return end
@@ -77,12 +109,32 @@ function M.init(env)
             end
           end
           if t then last_committed = t end
+          pending_mark = true
           pcall(function() log.info("cixin_quick_predict: commit anchored [" .. tostring(t) .. "] pending mark") end)
         end)
       end)
     end)
   end
-  pcall(function() log.info("cixin_quick_predict: commit notifier wired") end)
+  local ok_u, updater = pcall(function() return ctx.update_notifier end)
+  if ok_u and updater then
+    pcall(function()
+      updater:connect(function(c)
+        pcall(function()
+          if not pending_mark then return end
+          pending_mark = false
+          if marking then return end
+          local comp = false
+          pcall(function() comp = c:is_composing() end)
+          if not comp and has_predict(last_committed) then
+            c:push_input(MARK)  -- librime-lua 無 set_input 方法（那是 input 屬性 setter）
+            marking = true
+            pcall(function() log.info("cixin_quick_predict: mark pushed after commit [" .. tostring(last_committed) .. "]") end)
+          end
+        end)
+      end)
+    end)
+  end
+  pcall(function() log.info("cixin_quick_predict: notifiers wired commit=" .. tostring(ok2 and notifier ~= nil) .. " update=" .. tostring(ok_u and updater ~= nil)) end)
 end
 
 -- 從 context 取最近上屏文字（兜底路徑）
@@ -107,14 +159,38 @@ function M.func(key, env)
 
   local ctx = env.engine.context
 
+  -- 同步標記態：composition 已被外部清空時復位
+  local composing = false
+  pcall(function() composing = ctx:is_composing() end)
+  if marking and not composing then marking = false end
+
   -- ② Shift+數字 判定（兩形態）
   local n = nil
   local ok_sh, shifted = pcall(function() return key:shift() end)
   if ok_sh and shifted then n = DIGIT_MAP[key.keycode] end
 
+  -- ③ 聯想標記態的按鍵語義
+  if marking then
+    if n then
+      -- Shift+數字：走接龍主邏輯（下方）
+    elseif key.keycode == 0xFF1B then            -- Esc：取消聯想
+      pcall(function() ctx:clear() end)
+      marking = false
+      pcall(function() log.info("cixin_quick_predict: mark cleared (esc)") end)
+      return 1
+    elseif key.keycode == 0xFFE1 or key.keycode == 0xFFE2 then
+      return 2                                    -- 純 Shift：放行，不動標記（避免候選欄閃爍）
+    else                                          -- 字母/普通數字/空格/標點/回車：
+      pcall(function() ctx:clear() end)           -- 清標記放行，恢復正常打字
+      marking = false
+      pcall(function() log.info("cixin_quick_predict: mark cleared (key 0x" .. string.format("%x", key.keycode) .. ")") end)
+      return 2
+    end
+  end
+
   if not n then return 2 end
-  -- 組字中（真打字）不攔截，避免干擾正常組字
-  if ctx:is_composing() then return 2 end
+  -- 真打字（非標記態的組字）時不攔截；標記態（marking）繼續走接龍
+  if ctx:is_composing() and not marking then return 2 end
 
   -- 取最近上屏字：notifier 錨定優先，commit_history 兜底
   local committed = last_committed
