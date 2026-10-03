@@ -13,7 +13,7 @@
 schema:
   schema_id: cixin_quick
   name: 慈心速成
-  version: "1.0.0"
+  version: "1.1.0"
   author:
     - Kho
     - （詞組聯想增強：WorkBuddy）
@@ -49,6 +49,7 @@ engine:
     - punct_segmentor
     - fallback_segmentor
   translators:
+    - lua_translator@*cixin_quick_predict_tr  # 聯想候選（放首位：優先於標點候選；配合標記分段）
     - punct_translator
     - table_translator
     - reverse_lookup_translator            # ` + 拼音 反查速成
