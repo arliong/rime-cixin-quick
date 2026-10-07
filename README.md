@@ -41,22 +41,60 @@ Shift+4 → 麼的      Shift+5 → 麼是      Shift+6 → 麼兒 …
 
 ## 安裝（Windows 小狼毫）
 
-1. 安裝 [小狼毫 Weasel](https://rime.im/)；
-2. 從本頁 [Releases](../../releases) 下載 `cixin-quick-vX.Y.Z-full.zip`；
-3. 解壓，把所有檔案複製到 `%APPDATA%\Rime\`（用戶資料夾，可由
-   開始選單「【小狼毫】用戶資料夾」打開）；
-4. 「【小狼毫】輸入法設定」勾選「**慈心速成**」，點「重新部署」；
-5. 若單字候選異常，確認資料夾內有從上游取得的 `ms_quick` 單字碼表
-   （安裝腳本會自動處理，手動安裝見下方「源碼安裝」）。
+> 上游碼表未聲明授權，本專案發佈的皆為 **addon 增件包**（不含上游碼表）；
+> full 整包將在上游授權後提供。兩種安裝方式按情況二選一：
 
-### 源碼安裝（不含上游碼表）
+### 方式 A：腳本安裝（推薦，自動取得上游碼表）
+
+1. 安裝 [小狼毫 Weasel](https://rime.im/)；
+2. 取得本倉庫（下載 zip 解壓，或 `git clone`），在其目錄執行：
 
 ```text
-git clone https://github.com/<你的用戶名>/rime-cixin-quick
-cd rime-cixin-quick
 python tools/install_user.py        # 自動從上游下載單字碼表並合併、部署
 ```
 
+3. 「【小狼毫】輸入法設定」勾選「**慈心速成**」，點「重新部署」。
+
+### 方式 B：addon 增件手動安裝（已裝上游方案者）
+
+1. 從本頁 [Releases](../../releases) 下載 `cixin-quick-vX.Y.Z-addon.zip`；
+2. 確保上游 [rime-ms-quick](https://github.com/philipposkhos/rime-ms-quick)
+   已安裝且部署成功（`ms_quick.schema.yaml` + `ms_quick.dict.yaml` 在 Rime
+   用戶目錄，可由開始選單「【小狼毫】用戶資料夾」打開）；
+3. 把包內 `lua\` 資料夾整個複製到 Rime 用戶目錄；
+4. 編輯 `ms_quick.schema.yaml`，三處 patch（排障見包內 `INSTALL.md`）：
+
+   ```yaml
+   # ① engine/processors: 列表最前面加一行
+   - lua_processor@*cixin_quick_predict
+
+   # ② engine/translators: 列表最前面加兩行
+   - lua_translator@*cixin_quick_predict_tr
+   - reverse_lookup_translator@stroke_lookup   # v1.2.0 筆畫反查
+
+   # ③ 檔案末尾追加（v1.2.0 筆畫反查配置）
+   stroke_lookup:
+     tag: stroke_lookup
+     dictionary: stroke
+     prefix: "'"
+     tips: 〔筆畫反查速成：h一 s丨 p丿 n丶 z乙〕
+     enable_completion: true
+     preedit_format:
+       - "xlit|hspnz|一丨丿丶乙|"
+     comment_format:
+       - "xlit|abcdefghijklmnopqrstuvwxyz|日月金木水火土竹戈十大中一弓人心手口尸廿山女田難卜符|"
+
+   recognizer:
+     import_preset: default
+     patterns:
+       reverse_lookup: "`[a-z]*$"
+       stroke_lookup: "'[hspnz]*$"
+   ```
+
+   > 若上游 schema 已有 `recognizer:` 段，只把 `stroke_lookup` 一行併進其
+   > `patterns:` 即可，不要重複整段。
+5. 「重新部署」，依上方「功能」一節逐項試用。
+   
 ## 版本
 
 | 版本 | 日期 | 內容 |
