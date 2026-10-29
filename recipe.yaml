@@ -1,0 +1,29 @@
+# 慈心速成（cixin_quick）— 東風破 plum 安裝配方
+#
+# 用法：
+#   bash rime-install arliong/rime-cixin-quick
+#   （Windows 小狼毫：托盤右鍵 →「取得更多輸入方案」→ 輸入 arliong/rime-cixin-quick）
+#
+# 安裝內容：
+#   cixin_quick.schema.yaml   方案設定
+#   cixin_quick.dict.yaml     合併碼表（單字 21,702 + 詞組 63,297 = 84,999 條）
+#   lua/*.lua                 聯想組件（Shift+數字 接龍 / 候選欄聯想）
+#
+# default.custom.yaml 採「追加」寫法（"schema_list/+"），
+# 不會覆蓋使用者既有的方案清單與其他自訂項。
+
+recipe:
+  Rx: arliong/rime-cixin-quick
+
+install_files:
+  - cixin_quick.schema.yaml
+  - cixin_quick.dict.yaml
+  - lua/cixin_quick_index.lua
+  - lua/cixin_quick_predict.lua
+  - lua/cixin_quick_predict_tr.lua
+
+patch_files:
+  default.custom.yaml:
+    "patch/+":
+      "schema_list/+":
+        - schema: cixin_quick

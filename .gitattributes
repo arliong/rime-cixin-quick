@@ -1,0 +1,9 @@
+# RIME 資源檔一律使用 LF，避免 Windows checkout 後 CRLF 混入碼表與 YAML
+* text=auto eol=lf
+
+*.dict.yaml text eol=lf
+*.schema.yaml text eol=lf
+*.yaml text eol=lf
+*.lua text eol=lf
+*.py text eol=lf
+*.md text eol=lf

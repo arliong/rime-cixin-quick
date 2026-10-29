@@ -2,6 +2,41 @@
 
 所有對外發佈的版本均記錄於此。格式參考 [Keep a Changelog](https://keepachangelog.com/)。
 
+## [v1.3.0] — 2026-10-29
+
+### 新增
+- **獲上游 MIT 授權**：上游 [philipposkhos/rime-ms-quick](https://github.com/philipposkhos/rime-ms-quick)
+  已於 2026-10-28 為該倉庫加入 MIT License，並於
+  [issue #5](https://github.com/philipposkhos/rime-ms-quick/issues/5)
+  明示授權本專案使用、修改及再分發其單字碼表。
+- **整包直發**：`cixin-quick-v1.3.0-full.zip` 內含合併後的完整碼表
+  （單字 21,702 + 詞組 63,297 = 84,999 條），下載解壓即用，無需 Python、無需聯網。
+- **東風破 plum 一鍵安裝**：倉庫提供 `recipe.yaml`，
+  `bash rime-install arliong/rime-cixin-quick` 即可完成安裝。
+- **MIT 合規**：整包與倉庫均附上游授權全文（`licenses/rime-ms-quick-LICENSE`）
+  與版權聲明（`NOTICE.md`），滿足 MIT 條款「分發時須保留版權及授權聲明」之要求。
+
+### 變更
+- **倉庫改為 RIME 標準根級佈局**：`cixin_quick.schema.yaml`、`cixin_quick.dict.yaml`
+  移至倉庫根目錄（plum 的 `install_files` 會保留相對路徑，置於子目錄將無法被 RIME 載入）。
+- **方案註冊改為「追加」寫法**：`default.custom.yaml` 與 plum 配方一律採用
+  `"schema_list/+"`，不再整段覆蓋使用者的 `schema_list`。
+  plum 配方另以 `"patch/+"` 合併進既有的 `patch` 節點，
+  使用者既有的方案清單與其它自訂項（menu、switches 等）皆保留。
+- **新增 `tools/build_dict.py`**：可由上游碼表 + 詞組詞表重建合併碼表，
+  重建過程套用 MIT 標頭，便於複核出處。
+- `tools/install_user.py` 改為直接部署倉庫內建的完整碼表（不再聯網下載上游），
+  並改以「追加」寫法註冊方案（改動前自動備份 `.bak`）。
+
+### 修復
+- **反查詞典缺失**：`luna_pinyin.prism.bin` / `stroke.prism.bin` 過去只有在
+  使用者方案清單恰好含 `luna_pinyin` / `stroke` 時才會被編譯，
+  否則拼音反查與筆畫反查靜默失效。
+  v1.3.0 改由 `cixin_quick.schema.yaml` 宣告 `schema/dependencies: [luna_pinyin, stroke]`，
+  部署時自動編譯依賴方案——既修好反查功能，也不必再往使用者方案清單塞額外條目。
+- **部署時碼表殘留**：`ms_quick` 舊命名殘留於 schema／lua 的問題已於整包建置時
+  加入自動斷言檢查。
+
 ## [v1.2.0] — 2026-09-28
 
 ### 新增

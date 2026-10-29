@@ -8,3 +8,7 @@ __pycache__/
 *.pyc
 .DS_Store
 Thumbs.db
+
+# 上游單字碼表本地快取（tools/build_dict.py --offline 會放置於此）
+# 合併後的 cixin_quick.dict.yaml 已含這些內容並隨倉庫分發，故不需重複保留
+dict/ms_quick.dict.yaml

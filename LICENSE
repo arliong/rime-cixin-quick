@@ -2,21 +2,24 @@ MIT License
 
 Copyright (c) 2026 慈心速成 (Cixin Quick) 專案貢獻者
 
-本授權僅適用於本專案「原創」的檔案，包括：
+本授權涵蓋本專案「原創」的檔案，以及在原作者明示授權下再分發的第三方內容：
+
+原創檔案：
   - lua/cixin_quick_predict.lua        （盲接聯想處理器）
   - lua/cixin_quick_predict_tr.lua     （候選欄聯想翻譯器）
   - lua/cixin_quick_index.lua          （預建索引；由本專案腳本自動生成）
   - tools/ 目錄下全部腳本              （索引生成、詞組表生成、打包工具）
   - docs/ 目錄下全部文件
-  - cixin_quick.schema.yaml            （基於上游修改的功能性設定）
+  - cixin_quick.schema.yaml            （基於上游 schema 修改的功能性設定）
 
-上述「由腳本自動生成」的檔案（索引、詞組表）同時是 rime/rime-essay
+第三方內容（依原作者授權再分發）：
+  - cixin_quick.dict.yaml 中的單字速成碼部分
+    源自 philipposkhos/rime-ms-quick，依上游 MIT License 再分發，
+    授權原文見 licenses/rime-ms-quick-LICENSE，版權聲明見 NOTICE.md。
+
+「由腳本自動生成」的檔案（索引、詞組表）同時是 rime/rime-essay
 （LGPL-3.0）詞頻數據的衍生產物，其再分發同時受 LGPL-3.0 約束，
 詳見 NOTICE.md。
-
-不適用於本授權的內容：
-  - 單字速成碼表（源自 philipposkhos/rime-ms-quick，該上游未聲明
-    任何授權），其歸屬與使用限制見 NOTICE.md。
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -6,7 +6,12 @@ RIME／小狼毫的「微軟傳統速成」增強方案：**保留微軟速成�
 
 > 本專案基於 [philipposkhos/rime-ms-quick](https://github.com/philipposkhos/rime-ms-quick)
 > 的單字碼表發展而來。上游定位為「沒有聯想字」的純傳統速成；本專案的方向
-> 正好相反——把 XP 式聯想完整搬回 RIME。授權與歸屬詳見 [NOTICE.md](NOTICE.md)。
+> 正好相反——把 XP 式聯想完整搬回 RIME。
+>
+> **上游已於 2026-10-28 為該倉庫加入 MIT License，並於
+> [issue #5](https://github.com/philipposkhos/rime-ms-quick/issues/5)
+> 明示授權本專案使用、修改及再分發其單字碼表。**
+> 授權與歸屬詳見 [NOTICE.md](NOTICE.md)。
 
 ## 功能
 
@@ -39,62 +44,67 @@ Shift+4 → 麼的      Shift+5 → 麼是      Shift+6 → 麼兒 …
 | 拼音反查 | `` ` ``（數字 1 左邊的鍵）+ 拼音 | `` ` ``ren → 人 |
 | 筆畫反查 | `'` + 筆畫（h橫 s豎 p撇 n捺 z折） | `'`pn → 人 |
 
+> 兩個反查通道所需的 `luna_pinyin` / `stroke` 詞典，已由
+> `cixin_quick.schema.yaml` 的 `schema/dependencies` 宣告，
+> **部署時會自動編譯**——不必把它們塞進你自己的方案清單。
+
 ## 安裝（Windows 小狼毫）
 
-> 上游碼表未聲明授權，本專案發佈的皆為 **addon 增件包**（不含上游碼表）；
-> full 整包將在上游授權後提供。兩種安裝方式按情況二選一：
+> 三種安裝方式任選其一，皆**無需自行合併碼表**（本倉庫已內含合併後的完整碼表）。
 
-### 方式 A：腳本安裝（推薦，自動取得上游碼表）
+### 方式 A：東風破 plum 一鍵安裝（推薦）
 
-1. 安裝 [小狼毫 Weasel](https://rime.im/)；
-2. 取得本倉庫（下載 zip 解壓，或 `git clone`），在其目錄執行：
+已裝 [小狼毫 Weasel](https://rime.im/) 者，在 Git Bash／WSL 執行：
 
-```text
-python tools/install_user.py        # 自動從上游下載單字碼表並合併、部署
+```bash
+bash rime-install arliong/rime-cixin-quick
 ```
 
-3. 「【小狼毫】輸入法設定」勾選「**慈心速成**」，點「重新部署」。
+或用小狼毫的「取得更多輸入方案」對話框，輸入同樣的 `arliong/rime-cixin-quick`。
+安裝後「重新部署」，再以 `F4` 或托盤選單切到「慈心速成」。
 
-### 方式 B：addon 增件手動安裝（已裝上游方案者）
+> plum 會把方案**追加**（`"schema_list/+"`）到你的 `default.custom.yaml`，
+> 既有的方案清單與其它自訂項都不會被覆蓋。
 
-1. 從本頁 [Releases](../../releases) 下載 `cixin-quick-vX.Y.Z-addon.zip`；
-2. 確保上游 [rime-ms-quick](https://github.com/philipposkhos/rime-ms-quick)
-   已安裝且部署成功（`ms_quick.schema.yaml` + `ms_quick.dict.yaml` 在 Rime
-   用戶目錄，可由開始選單「【小狼毫】用戶資料夾」打開）；
-3. 把包內 `lua\` 資料夾整個複製到 Rime 用戶目錄；
-4. 編輯 `ms_quick.schema.yaml`，三處 patch（排障見包內 `INSTALL.md`）：
+### 方式 B：整包 zip（免 Python、免聯網）
+
+1. 從本頁 [Releases](../../releases) 下載 `cixin-quick-vX.Y.Z-full.zip`；
+2. 解壓，把**包內根級全部文件**複製到 Rime 用戶目錄
+   （開始選單 →「【小狼毫】用戶資料夾」，即 `%APPDATA%\Rime\`）；
+3. 若你**已有**自訂 `default.custom.yaml`，**不要覆蓋**——把下面一行併入你的
+   `patch/schema_list` 即可（不存在則直接用包內那份）：
 
    ```yaml
-   # ① engine/processors: 列表最前面加一行
-   - lua_processor@*cixin_quick_predict
-
-   # ② engine/translators: 列表最前面加兩行
-   - lua_translator@*cixin_quick_predict_tr
-   - reverse_lookup_translator@stroke_lookup   # v1.2.0 筆畫反查
-
-   # ③ 檔案末尾追加（v1.2.0 筆畫反查配置）
-   stroke_lookup:
-     tag: stroke_lookup
-     dictionary: stroke
-     prefix: "'"
-     tips: 〔筆畫反查速成：h一 s丨 p丿 n丶 z乙〕
-     enable_completion: true
-     preedit_format:
-       - "xlit|hspnz|一丨丿丶乙|"
-     comment_format:
-       - "xlit|abcdefghijklmnopqrstuvwxyz|日月金木水火土竹戈十大中一弓人心手口尸廿山女田難卜符|"
-
-   recognizer:
-     import_preset: default
-     patterns:
-       reverse_lookup: "`[a-z]*$"
-       stroke_lookup: "'[hspnz]*$"
+   patch:
+     "schema_list/+":
+       - schema: cixin_quick
    ```
 
-   > 若上游 schema 已有 `recognizer:` 段，只把 `stroke_lookup` 一行併進其
-   > `patterns:` 即可，不要重複整段。
-5. 「重新部署」，依上方「功能」一節逐項試用。
-   
+4. 托盤右鍵 → **重新部署**（首次編譯 84,999 條碼表，稍等數秒），`F4` 選「慈心速成」。
+
+### 方式 C：倉庫腳本安裝
+
+```text
+python tools/install_user.py
+```
+
+腳本會把方案檔、完整碼表與 Lua 組件部署到 `%APPDATA%\Rime\`，
+並以「追加」寫法把方案註冊進 `default.custom.yaml`（改動前自動備份 `.bak`）。
+選用參數：`--no-register`（不動 `default.custom.yaml`）、`--dry-run`（只看動作）。
+
+## 倉庫結構
+
+```text
+cixin_quick.schema.yaml   方案設定（含 schema/dependencies 反查依賴宣告）
+cixin_quick.dict.yaml     合併碼表（單字 21,702 + 詞組 63,297 = 84,999 條）
+recipe.yaml               東風破 plum 安裝配方
+default.custom.yaml       方案註冊輔助（追加寫法，位於 schema/ 供腳本使用）
+lua/                      librime-lua 聯想組件
+dict/                     詞組聯想詞表（供 tools/build_phrases.py 重建用）
+tools/                    安裝與碼表重建腳本
+docs/                     開發文檔
+```
+
 ## 版本
 
 | 版本 | 日期 | 內容 |
@@ -102,6 +112,7 @@ python tools/install_user.py        # 自動從上游下載單字碼表並合併
 | v1.0.0 | 2026-09-27 | XP 式盲接聯想（Shift+1..9 接龍） |
 | v1.1.0 | 2026-09-27 | 候選欄可見聯想（上屏後橫向列出、可點選） |
 | v1.2.0 | 2026-09-28 | 拼音 `` ` `` ＋筆畫 `'` 雙通道反查，附速成碼注釋 |
+| v1.3.0 | 2026-10-29 | 獲上游 MIT 授權；整包直發、plum 一鍵安裝；`schema/dependencies` 自動編譯反查詞典 |
 
 變更細節見 [CHANGELOG.md](CHANGELOG.md)。
 
@@ -110,7 +121,9 @@ python tools/install_user.py        # 自動從上游下載單字碼表並合併
 - 本專案原創代碼：[MIT](LICENSE)
 - 詞組詞表：衍生自 [rime/rime-essay](https://github.com/rime/rime-essay)（LGPL-3.0）
 - 單字碼表：源自 [rime-ms-quick](https://github.com/philipposkhos/rime-ms-quick)，
-  上游未聲明授權，本倉庫不再分發、安裝時自行取得——詳見 [NOTICE.md](NOTICE.md)
+  **上游已明示授權再分發**（MIT）——授權全文見
+  [licenses/rime-ms-quick-LICENSE](licenses/rime-ms-quick-LICENSE)，
+  歸屬說明詳見 [NOTICE.md](NOTICE.md)
 
 ## 開發文檔
 
@@ -121,6 +134,6 @@ python tools/install_user.py        # 自動從上游下載單字碼表並合併
 
 ## 致謝
 
-- [philipposkhos/rime-ms-quick](https://github.com/philipposkhos/rime-ms-quick) — 微軟傳統速成排位碼表
+- [philipposkhos/rime-ms-quick](https://github.com/philipposkhos/rime-ms-quick) — 微軟傳統速成排位碼表，感謝授權
 - [RIME｜中州韻輸入法引擎](https://rime.im/) 與 [librime-lua](https://github.com/hchunhui/librime-lua)
 - [rime/rime-essay【八股文】](https://github.com/rime/rime-essay) — 詞頻數據
